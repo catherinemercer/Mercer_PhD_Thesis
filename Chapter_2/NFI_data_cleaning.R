@@ -1,0 +1,1288 @@
+## Formatting the NFI data prior to running the SDMs
+
+library(plyr)
+library(gridExtra)#for displaying ggplots in one window
+library(dplyr)
+library(sf)
+library(mapview)
+library(tidyverse)
+
+
+setwd("C:/Users/cmer/Documents/SDMsDataCode/inventoryData/InventoryCopies")
+inventory<- read_csv("Inventory_4_copy.csv")
+
+#rename some columns
+names(inventory)
+inventory <- rename(inventory,
+                    Office = District_Office,
+                    Plot_no = Plot_Number,
+                    Tree_no = Tree_Number,
+                    X_axis = X_asis,
+                    Chi_Name = Tree_Chi_Name,
+                    En_Name = Tree_En_Name,
+                    Sci_Name = Scientific_Name,
+                    Elev1 = Elevation...10,
+                    Elev2 = Elevation...23,
+                    Height = Tree_Height)
+
+
+#remove spaces and Chinese characters
+inventory$Sci_Name <- gsub(" ", ".", inventory$Sci_Name)
+inventory$Sci_Name <- gsub("愼㸰", ".", inventory$Sci_Name)
+inventory$Sci_Name <- gsub("攼㸱", ".", inventory$Sci_Name)
+inventory$Sci_Name <- gsub("攼㸹", ".", inventory$Sci_Name)
+inventory$Sci_Name <- gsub("搼㸷", ".", inventory$Sci_Name)
+inventory$Sci_Name <- gsub("昼㹣", ".", inventory$Sci_Name)
+
+# Rename species to only include genus and species name
+
+inventory$Sci_Name<-revalue(inventory$Sci_Name,c("Abies.kawakamii.(Hayata).Ito."="Abies.kawakamii"))  # in dataframe listed as:Abies kawakamii (Hayata) Ito "
+
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acacia.confusa.Merr."="Acacia.confusa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acer.albopurpurascens.Hayata"="Acer.albopurpurascens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acer.kawakamii.Koidz."="Acer.kawakamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acer.morrisonense.Hayata"="Acer.morrisonense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acer.palmatum.Thunb..var..pubescens.Li"="Acer.palmatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Acer.serrulatum.Hayata"="Acer.serrulatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Adinandra.formosana.Hayata"="Adinandra.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Adinandra.lasiostyla.Hayata"="Adinandra.lasiostyla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aglaia.formosana.Hayata"="Aglaia.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ailanthus.altissima.(Miller).Swingle.var..tanakai.(Hayata).Sasaki"="Ailanthus.altissima"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Alangium.chinense.(Lour.).Rehder"="Alangium.chinense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Albizia.falcata.Bacher.ex.Merill"="Albizia.falcata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Albizia.procera.(Roxb.).Benth."="Albizia.procera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aleurites.fordii.Hemsl."="Aleurites.fordii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aleurites.montana.(Lour.).Wilson"="Aleurites.montana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Allophylus.timorensis.(DC.).Bl.."="Allophylus.timorensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Alniphyllum.pterospermum.Matsum."="Alniphyllum.pterospermum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Alnus.formosana.(Burkill).Makino."="Alnus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Amentotaxus.formosana.Li"="Amentotaxus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Anneslea.lanceolata.(Hayata).Kanehira"="Anneslea.lanceolata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Anona.squamosa.Linn."="Anona.squamosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Antidesma.hiiranense.Hayata"="Antidesma.hiiranense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Antidesma.japonicum.Sieb..&.Zucc..var..densiflorum.Hurusawa"="Antidesma.japonicum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Antidesma.pentandrum.Merr..var..barbatum.(Presl).Merr."="Antidesma.pentandrum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aphananthe.aspera.(Thunb..ex.Murray).Planch."="Aphananthe.aspera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aralia.bipinnata.Blanco"="Aralia.bipinnata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aralia.decaisneana.Hance"="Aralia.decaisneana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Archidendron.lucidum.(Benth.).I..Nielsen"="Archidendron.lucidum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ardisia.cornudentata.Mez.ssp..morrisonensis.(Hayata).Yuen.P..Yang"="Ardisia.cornudentata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ardisia.quinquegona.Blume"="Ardisia.quinquegona"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ardisia.sieboldii.Miq."="Ardisia.sieboldii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Astronia.ferruginea.Elmer"="Astronia.ferruginea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Aucuba.japonica.Thunb."="Aucuba.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Bambusa.stenostachya.Hack.."="Bambusa.stenostachya"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Barringtonia.racemosa.(L.).Bl..ex.DC."="Barringtonia.racemosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Barthea.barthei.(Hance).Krass"="Barthea.barthei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Beilschmiedia.erythrophloia.Hayata"="Beilschmiedia.erythrophloia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Beilschmiedia.tsangii.Merr."="Beilschmiedia.tsangii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Benthamidia.japonica.(Sieb..&.Zucc.).Hara.var..chinensis.(Osborn).Hara"="Benthamidia.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Berberis.kawakamii.Hayata"="Berberis.kawakamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Berberis.mingetsuensis.Hayata"="Berberis.mingetsuensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Bischofia.javanica.Bl."="Bischofia.javanica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Boehmeria.densiflora.Hook..&.Arn."="Boehmeria.densiflora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Boehmeria.formosana.Hayata"="Boehmeria.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Boehmeria.nivea.(L.).Gaudich."="Boehmeria.nivea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Boehmeria.nivea.(L.).Gaudich..var..tenacissima.(Gaudich.).Miq.."="Boehmeria.nivea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Boehmeria.wattersii.(hance).B..L..Shih.&.Y..P..Yang"="Boehmeria.wattersii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Bombax.malabarica.DC."="Bombax.malabarica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Bridelia.balansae.Tutch."="Bridelia.balansae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Bridelia.tomentosa.Bl.."="Bridelia.tomentosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Broussonetia.papyrifera.(L.).L'Herit..ex.Vent."="Broussonetia.papyrifera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Buxus.microphylla.Sieb..&.Zucc..ssp..sinica.(Rehd..&.Wils.).Hatusima"="Buxus.microphylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.dichotoma.(Lour.).K..Koch"="Callicarpa.dichotoma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.formosana.Rolfe"="Callicarpa.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.hypoleucophylla.W..F..Lin.&.I..L..Wang"="Callicarpa.hypoleucophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.kochiana.Makino"="Callicarpa.kochiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.longissima.(Hemsl.).Merr.."="Callicarpa.longissima"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.pilosissima.Maxim."="Callicarpa.pilosissima"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Callicarpa.tikusikensis.Masam."="Callicarpa.tikusikensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Calocedrus.macrolepis.Kurz.var..formosana.(Florin).Cheng.&.L..K..Fu."="Calocedrus.macrolepis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.brevistyla.(Hayata).Coh.-Stuart."="Camellia.brevistyla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.caudata.Wall."="Camellia.caudata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.japonica.L."="Camellia.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.salicifolia.Champ."="Camellia.salicifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.tenuiflora.(Hayata).Coh.-Stuart"="Camellia.tenuiflora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Camellia.transnokoensis.Hayata"="Camellia.transnokoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Capparis.micracantha.DC..var..henryi.(Matsum.).Jacobs."="Capparis.micracantha"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Capparis.sikkimensis.Kurz.ssp..formosana.(Hemsl.).Jacobs"="Capparis.sikkimensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Carpinus.hebestroma.Yamamoto"="Carpinus.hebestroma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Carpinus.kawakamii.Hayata"="Carpinus.kawakamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Carpinus.rankanensis.Hayata"="Carpinus.rankanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Casearia.membranacea.Hance"="Casearia.membranacea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.cuspidata.(Thunb.).Schottky.var..carlesii.(Hemsl.).Yamaz."="Castanopsis.cuspidata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.cuspidata.(Thunb..ex.Murray).Schottky.var..carlesii.(Hemsl.).Yamazaki.f..sessilis.(Nakai).Liao"="Castanopsis.cuspidata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.eyrei.(Champ..ex.Benth.).Tutcher."="Castanopsis.eyrei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.fabri.Hance"="Castanopsis.fabri"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.fargesii.Fr.."="Castanopsis.fargesii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.formosana.(Skan).Hayata"="Castanopsis.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.indica.(Roxb.).A..DC."="Castanopsis.indica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Castanopsis.kawakamii.Hayata."="Castanopsis.kawakamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Casuarina.equisetifolia.L."="Casuarina.equisetifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Celtis.formosana.Hayata"="Celtis.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Celtis.nervosa.Hemsl."="Celtis.nervosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Celtis.sinensis.Pers."="Celtis.sinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cephalotaxus.wilsoniana.Hayata"="Cephalotaxus.wilsoniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Chamaecyparis.formosensis.Matsum.."="Chamaecyparis.formosensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Chamaecyparis.obtusa.Sieb..&.Zucc..var..formosana.(Hayata).Rehder."="Chamaecyparis.obtusa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Champereia.manillana.(Bl.).Merr.."="Champereia.manillana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.austrosinense.H..T..Chang"="Cinnamomum.austrosinense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.brevipedunculatum.C..E..Chang"="Cinnamomum.brevipedunculatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.camphora.(L.).Presl."="Cinnamomum.camphora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.insulari-montanum.Hayata"="Cinnamomum.insularimontanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.kanehirae.Hayata"="Cinnamomum.kanehirae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.macrostemon.Hayata"="Cinnamomum.macrostemon"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.micranthum.(Hayata).Hayata"="Cinnamomum.micranthum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.osmophloeum.Kanehira"="Cinnamomum.osmophloeum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.osmophloeum.Kanehira."="Cinnamomum.osmophloeum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.reticulatum.Hayata."="Cinnamomum.reticulatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cinnamomum.subavenium.Miq."="Cinnamomum.subavenium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Citrus.depressa.Hayata"="Citrus.depressa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Citrus.grandis.Osbeck."="Citrus.grandis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Citrus.ponki.(Hayata).Hort..ex.Tanaka"="Citrus.ponki"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Clausena.excavata.Burm..f."="Clausena.excavata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Clerodendrum..canescens.Wall..ex.Walpers"="Clerodendrum.canescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Clerodendrum.trichotomum.Thunb.."="Clerodendrum.trichotomum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cleyera.japonica.Thunb."="Cleyera.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cleyera.japonica.Thunb.."="Cleyera.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cleyera.japonica.Thunb..var..longicarpa.(Yamamoto).Ling.&.Hsieh"="Cleyera.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cleyera.japonica.Thunb..var..morii.(Yamamoto).Masam."="Cleyera.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cleyera.japonica.Thunb..var..taipinensis.Keng"="Cleyera.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cordia.dichotoma.Forst..f."="Cordia.dichotoma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Corylopsis.stenopetala.Hayata"="Corylopsis.stenopetala"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Crateva.adansonii.DC..ssp..formosensis.Jacobs"="Crateva.adansonii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptocarya.chinensis.(Hance).Hemsl."="Cryptocarya.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptocarya.chinensis.(Hance).Hemsl.."="Cryptocarya.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptocarya.concinna.Hance"="Cryptocarya.concinna"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptocarya.concinna.Hance."="Cryptocarya.concinna"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptocarya.elliptifolia.Merr.."="Cryptocarya.elliptifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cryptomeria.japonica.(L..f.).D..Don"="Cryptomeria.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cunninghamia.konishii.Hayata."="Cunninghamia.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cunninghamia.lanceolata.(Lamb.).Hook."="Cunninghamia.lanceolata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.championii.(Benth.).Oerst."="Cyclobalanopsis.championii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.gilva.(Bl.).Oerst.."="Cyclobalanopsis.gilva"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.glauca.(Thunb..ex.Murray).Oerst.."="Cyclobalanopsis.glauca"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.globosa.Lin.&.Liu"="Cyclobalanopsis.globosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.hypophaea.(Hayata).Kudo"="Cyclobalanopsis.hypophaea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.longinux.(Hayata).Schott."="Cyclobalanopsis.longinux"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.morii.(Hayata).Schottky"="Cyclobalanopsis.morii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.pachyloma.(O..Seem.).Schott.."="Cyclobalanopsis.pachyloma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.repandifolia.(Liao).Liao"="Cyclobalanopsis.repandifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.salicina.(Bl.).Oerst."="Cyclobalanopsis.salicina"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.sessilifolia.(Bl.).Schott."="Cyclobalanopsis.sessilifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Cyclobalanopsis.stenophylloides.(Hayata).Kudo.&.Masam..ex.Kudo"="Cyclobalanopsis.stenophylloides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Daphne.morrisonesis.Chang"="Daphne.morrisonesis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Daphniphyllum.glaucescens.Bl..ssp..oldhamii.(Hemsl.).Huang"="Daphniphyllum.glaucescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Daphniphyllum.glaucescens.Bl..ssp..oldhamii.(Hemsl.).Huang."="Daphniphyllum.glaucescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Daphniphyllum.himalaense.(Benth.).Muell.-Arg..ssp..macropodum.(Miq.).Huang"="Daphniphyllum.himalaense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Debregeasia.orientalis.C..J..Chen"="Debregeasia.orientalis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Decaspermum.gracilentum.(Hance).Merr..&.Perry."="Decaspermum.gracilentum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Dendrocalamus.latiflorus.Munro"="Dendrocalamus.latiflorus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Dendrocnide.meyeniana.(Walp.).Chew"="Dendrocnide.meyeniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Dendropanax.dentiger.(Harms.ex.Diels).Merr.."="Dendropanax.dentiger"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Deutzia.cordatula.Li"="Deutzia.cordatula"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Deutzia.pulchra.Vidal."="Deutzia.pulchra"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Deutzia.taiwanensis.(Maxim.).Schneider."="Deutzia.taiwanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.eriantha.Champ..ex.Benth."="Diospyros.eriantha"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.japonica.Siebold.&.Zucc."="Diospyros.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.maritima.Blume"="Diospyros.maritima"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.morrisiana.Hance."="Diospyros.morrisiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.oldhamii.Maxim."="Diospyros.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Diospyros.oldhamii.Maxim.."="Diospyros.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Distyliopsis.dunnii.(Hemsl.).Endress"="Distyliopsis.dunnii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Distylium.gracile.Nakai"="Distylium.gracile"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Distylium.racemosum.Sieb..&.Zucc."="Distylium.racemosum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Dodonaea.viscosa.(L.).Jacq."="Dodonaea.viscosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Drypetes.karapinensis.(Hayata).Pax"="Drypetes.karapinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Dysoxylum.hongkongense.(Tutch.).Merr."="Dysoxylum.hongkongense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ehretia.acuminata.R..Brown"="Ehretia.acuminata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ehretia.dicksonii.Hance"="Ehretia.dicksonii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ehretia.longiflora.Champ..ex.Benth."="Ehretia.longiflora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ehretia.resinosa.Hance"="Ehretia.resinosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeagnus.formosana.Nakai."="Elaeagnus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeagnus.thunbergii.Serv."="Elaeagnus.thunbergii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeagnus.umbellata.Thunb."="Elaeagnus.umbellata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeocarpus.japonicus.Siebold.&.Zucc."="Elaeocarpus.japonicus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeocarpus.serratus.L."="Elaeocarpus.serratus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Elaeocarpus.sylvestris.(Lour.).Poir."="Elaeocarpus.sylvestris"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Engelhardia.roxburghiana.Wall."="Engelhardia.roxburghiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eriobotrya.deflexa.(Hemsl.).Nakai"="Eriobotrya.deflexa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eriobotrya.deflexa.(Hemsl.).Nakai."="Eriobotrya.deflexa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eucalyptus.robusta..Smith"="Eucalyptus.robusta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euonymus.carnosus.Hemsl."="Euonymus.carnosus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euonymus.laxiflorus.Champ..ex.Benth.."="Euonymus.laxiflorus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euonymus.spraguei.Hayata"="Euonymus.spraguei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euonymus.tashiroi.Maxim."="Euonymus.tashiroi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euonymus.tashiroi.Maxim.."="Euonymus.tashiroi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Euphoria.longana.Lam."="Euphoria.longana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.chinensis.R..Br.."="Eurya.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.crenatifolia.(Yamamoto).Kobuski"="Eurya.crenatifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.gnaphalocarpa.Hayata."="Eurya.gnaphalocarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.hayatae.Yamamoto"="Eurya.hayatae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.leptophylla.Hayata"="Eurya.leptophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.loquaiana.Dunn"="Eurya.loquaiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.nitida.Korthals"="Eurya.nitida"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.septata.Wu,.Hsu.&.Tsou"="Eurya.septata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eurya.strigillosa.Hayata"="Eurya.strigillosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Eustigma.oblongifolium.Gardn..&.Champ.."="Eustigma.oblongifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fagus.hayatae.Palib."="Fagus.hayatae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fatsia.polycarpa.Hayata"="Fatsia.polycarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.ampelas.Burm..f."="Ficus.ampelas.Burm"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.benjamina.L."="Ficus.benjamina"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.caulocarpa.(Miq.).Miq.."="Ficus.caulocarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.erecta.Thunb..var..beecheyana.(Hook..&.Arn.).King"="Ficus.erecta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.fistulosa.Reinw..ex.Bl.."="Ficus.fistulosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.formosana.Maxim."="Ficus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.irisana.Elm."="Ficus.irisana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.microcarpa.L..f."="Ficus.microcarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.nervosa.Heyne.ex.Roth.."="Ficus.nervosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.septica.Burm..f."="Ficus.septica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.superba.(Miq.).Miq..var..japonica.Miq."="Ficus.superba"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.variegata.Bl..var..garciae.(Elm.).Corner"="Ficus.variegata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ficus.virgata.Reinw..ex.Bl."="Ficus.virgata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Firmiana.simplex.(L.).W..F..Wight."="Firmiana.simplex"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fissistigma.glaucescens.(Hance).Merr."="Fissistigma.glaucescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fissistigma.oldhamii.(Hemsl.).Merr."="Fissistigma.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Flueggea.suffruticosa.(Pallas).Baillon"="Flueggea.suffruticosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fraxinus.griffithii.C..B..Clarke"="Fraxinus.griffithii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fraxinus.griffithii.C..B..Clarke."="Fraxinus.griffithii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Fraxinus.insularis.Hemsl."="Fraxinus.insularis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Garcinia.multiflora.Champ."="Garcinia.multiflora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Gardenia.jasminoides.Ellis"="Gardenia.jasminoides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Gleditsia.rolfei.Vidal"="Gleditsia.rolfei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.acuminatum.Muell.-Arg."="Glochidion.acuminatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.ovalifolium.Lu.&.Hsu"="Glochidion.ovalifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.philippicum.(Cavan.).C..B..Rob."="Glochidion.philippicum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.rubrum.Blume"="Glochidion.rubrum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.zeylanicum.(Gaertn.).A..Juss.."="Glochidion.zeylanicum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glochidion.zeylanicum.(Gaertn.).A..Juss..var..lanceolatum.(Hayata).M..J..Deng.&.J..C..Wang"="Glochidion.zeylanicum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Glycosmis.citrifolia.(Willd.).Lindl."="Glycosmis.citrifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Helicia.cochinchinensis.Lour."="Helicia.cochinchinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Helicia.rengetiensis.Masam."="Helicia.rengetiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Hibiscus.mutabilis.L."="Hibiscus.mutabilis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Hibiscus.taiwanensis.Hu"="Hibiscus.taiwanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Hydrangea.angustipetala.Hayata."="Hydrangea.angustipetala"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Hydrangea.aspera.D..Don"="Hydrangea.aspera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Hydrangea.chinensis.Maxim."="Hydrangea.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Idesia.polycarpa.Maxim."="Idesia.polycarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.arisanensis.Yamamoto"="Ilex.arisanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.asprella.(Hook..&.Arn.).Champ."="Ilex.asprella"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.bioritsensis.Hayata"="Ilex.bioritsensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.cochinchinensis.(Lour.).Loes."="Ilex.cochinchinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.crenata.Thunb.."="Ilex.crenata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.ficoidea.Hemsl."="Ilex.ficoidea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.formosana.Maxim."="Ilex.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.formosana.Maxim.."="Ilex.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.goshiensis.Hayata"="Ilex.goshiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.hayataiana.Loes."="Ilex.hayataiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.lonicerifolia.Hayata."="Ilex.lonicerifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.lonicerifolia.Hayata.var..matsudai.Yamamoto"="Ilex.lonicerifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.maximowicziana.Loes."="Ilex.maximowicziana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.micrococca.Maxim.."="Ilex.micrococca"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.pedunculosa.Miq."="Ilex.pedunculosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.pubescens.Hook..&.Arn."="Ilex.pubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.rotunda.Thunb."="Ilex.rotunda"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.sugerokii.Maxim..var..brevipedunculata.(Maxim.).S..Y..Hu"="Ilex.sugerokii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.tugitakayamensis.Sasaki"="Ilex.tugitakayamensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.uraiensis.Mori.&.Yamamoto"="Ilex.uraiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ilex.yunnanensis.Fr..var..parvifolia.(Hayata).S..Y..Hu"="Ilex.yunnanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Illicium.anisatum.L."="Illicium.anisatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Illicium.arborescens.Hayata"="Illicium.arborescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Itea.oldhamii.Schneider"="Itea.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Itea.parviflora.Hemsl.."="Itea.parviflora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Juglans.cathayensis.Dod"="Juglans.cathayensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Juglans.cathayensis.Dode"="Juglans.cathayensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Juniperus.formosana.Hayata"="Juniperus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Juniperus.morrisonicola.Hayata"="Juniperus.morrisonicola"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Kleinhovia.hospita.L.."="Kleinhovia.hospita"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Koelreuteria.henryi.Dummer"="Koelreuteria.henryi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lagerstroemia.subcostata.Koehne"="Lagerstroemia.subcostata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Leea.guineensis.G..Don"="Leea.guineensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Leea.philippinensis.Merr."="Leea.philippinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Leucaena.leucocephala.(Lam.).de.Wit"="Leucaena.leucocephala"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ligustrum.liukiuense.Koidz."="Ligustrum.liukiuense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ligustrum.morrisonense.Kanehira.&.Sasaki"="Ligustrum.morrisonense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ligustrum.pricei.Hayata"="Ligustrum.pricei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ligustrum.sinense.Lour..ex.Dence."="Ligustrum.sinense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Limlia.uraiana.(Hayata).Masam..&.Tomiya"="Limlia.uraiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lindera.communis.Hemsl."="Lindera.communis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lindera.erythrocarpa.Makino"="Lindera.erythrocarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lindera.megaphylla.Hemsl.."="Lindera.megaphylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Liodendron.formosanum.(Kanehira.&.Sasaki).Keng."="Liodendron.formosanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Liquidambar.formosana.Hance"="Liquidambar.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litchi.chinensis.Sonn."="Litchi.chinensis.Sonn."))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lithocarpus.amygdalifolius.(Skan).Hayata"="Lithocarpus.amygdalifolius"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lithocarpus.amygdalifolius.(Skan).Hayata."="Lithocarpus.amygdalifolius"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lithocarpus.castanopsisifolius.(Hayata).Hayata"="Lithocarpus.castanopsisifolius"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.acuminata.(Blume).Kurata"="Litsea.acuminata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.acutivena.Hayata"="Litsea.acutivena"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.akoensis.Hayata"="Litsea.akoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.akoensis.Hayata.var..chitouchiaoensis.Liao"="Litsea.akoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.akoensis.Hayata.var..sasakii.(Kamikoti).Liao"="Litsea.akoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.coreana.L.vl."="Litsea.coreana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.cubeba.(Lour.).Pers."="Litsea.cubeba"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.elongata.(Wall..ex.Nees).Benth..&.Hook..f..var..mushaensis.(Hayata).J..C..Liao"="Litsea.elongata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.hypophaea.Hayata."="Litsea.hypophaea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.lii.C..E..Chang"="Litsea.lii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.morrisonensis.Hayata"="Litsea.morrisonensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Litsea.rotundifolia.Hemsl..var..oblongifolia.(Nees).Allen"="Litsea.rotundifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lyonia.ovalifolia.(Wall.).Drude"="Lyonia.ovalifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lyonia.ovalifolia.(Wall.).Drude.var..lanceolata.(Wall.).Hand.-Mazz."="Lyonia.ovalifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Lysionotus.pauciflorus.Maxim.."="Lysionotus.pauciflorus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Macaranga.tanarius.(L.).Muell.-Arg."="Macaranga.tanarius"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.japonica.Sieb..&.Zucc..var..kusanoi.(Hayata).Liao."="Machilus.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.japonica.Siebold.&.Zucc."="Machilus.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.konishii.Hayata"="Machilus.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.konishii.Hayata."="Machilus.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.obovatifolia.(Hayata).Kanehira.&.Sasaki"="Machilus.obovatifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.obovatifolia.(Hayata).Kanehira.&.Sasaki.var..taiwuensis.S..Y..Lu.&.T..T..Chen"="Machilus.obovatifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.philippinensis.Merr."="Machilus.philippinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.thunbergii.Sieb..&.Zucc."="Machilus.thunbergii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.thunbergii.Sieb..&.Zucc.."="Machilus.thunbergii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.zuihoensis.Hayata"="Machilus.zuihoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Machilus.zuihoensis.Hayata.var..mushaensis.(Lu).Y..C..Liu"="Machilus.zuihoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Maclura.cochinchinensis.(Lour.).Corner"="Maclura.cochinchinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Maesa.perlaria.(Lour.).Merr."="Maesa.perlaria"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Maesa.perlaria.(Lour.).Merr..var..formosana.(Mez).Yuen.P..Yang"="Maesa.perlaria"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Magnolia.kachirachirai.(Kanehira.&.Yamamoto).Dandy"="Magnolia.kachirachirai"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mallotus.japonicus.(Thunb.).Muell.-Arg."="Mallotus.japonicus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mallotus.paniculatus.(Lam.).M.ll..Arg."="Mallotus.paniculatus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mallotus.paniculatus.(Lam.).Muell.-Arg..var..formosanus.(Hayata).Hurusawa"="Mallotus.paniculatus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mallotus.philippensis.(Lam.).Muell.-Arg.."="Mallotus.philippensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Malus.doumeri.(Bois.).Chev.."="Malus.doumeri"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mangifera.indica.L."="Mangifera.indica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Margaritaria.indica.(Dalz.).Airy.Shaw"="Margaritaria.indica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Maytenus.diversifolia.(Maxim.).Ding.Hou"="Maytenus.diversifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Melanolepis.multiglandulosa.(Reinw.).Reich..f..&.Zoll.."="Melanolepis.multiglandulosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Melia.azedarach.Linn."="Melia.azedarach"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Melicope.pteleifolia.(Champ..ex.Benth.).T..Hartley."="Melicope.pteleifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Melicope.semecarpifolia.(Merr.).T..Hartley."="Melicope.semecarpifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Meliosma.callicarpifolia.Hayata"="Meliosma.callicarpifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Meliosma.rhoifolia.Maxim.."="Meliosma.rhoifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Meliosma.rigida.Sieb..&.Zucc."="Meliosma.rigida"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Meliosma.squamulata.Hance"="Meliosma.squamulata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Michelia.compressa.(Maxim.).Sargent."="Michelia.compressa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Michelia.compressa.(Maxim.).Sargent.var..formosana.Kanehira"="Michelia.compressa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Microtropis.fokienensis.Dunn"="Microtropis.fokienensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Microtropis.japonica.(Fr..&.Sav.).Hall..f."="Microtropis.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Morus.australis.Poir.."="Morus.australis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Murraya.euchrestifolia.Hayata"="Murraya.euchrestifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Murraya.paniculata.(L.).Jack."="Murraya.paniculata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Mussaenda.pubescens.W..T..Aiton"="Mussaenda.pubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Myrica.adenophora.Hance"="Myrica.adenophora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Myrica.rubra.(Lour.).Sieb..&.Zucc."="Myrica.rubra"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Myrsine.seguinii.H..L.vl.."="Myrsine.seguinii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Nageia.nagi.(Thunb.).O..Ktze.."="Nageia.nagi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.aciculata.(Bl.).Koidz."="Neolitsea.aciculata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.aciculata.(Bl.).Koidz..var..variabillima.(Hayata).J..C..Liao"="Neolitsea.aciculata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.acuminatissima.(Hayata).Kanehira.&.Sasaki"="Neolitsea.acuminatissima"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.buisanensis.Yamamoto.&.Kamikoti"="Neolitsea.buisanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.hiiranensis.Liu.&.Liao"="Neolitsea.hiiranensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.konishii.(Hayata).Kanehira.&.Sasaki"="Neolitsea.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.parvigemma.(Hayata).Kanehira.&.Sasaki"="Neolitsea.parvigemma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neolitsea.sericea.(Bl.).Koidz."="Neolitsea.sericea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Neonauclea.reticulata.(Havil.).Merr."="Neonauclea.reticulata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Oreocnide.pedunculata.(Shirai).Masam."="Oreocnide.pedunculata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ormosia.formosana.Kanehira"="Ormosia.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ormosia.hengchuniana.Huang,.Yang.&.Huang"="Ormosia.hengchuniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.enervius.Masam..&.Mori"="Osmanthus.enervius"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.heterophyllus.(G..Don).P..S..Green"="Osmanthus.heterophyllus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.kaoi.(Liu.&.Liao).S..Y..Lu"="Osmanthus.kaoi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.lanceolatus.Hayata"="Osmanthus.lanceolatus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.marginatus.(Champ..ex.Benth.).Hemsl.."="Osmanthus.marginatus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Osmanthus.matsumuranus.Hayata"="Osmanthus.matsumuranus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pachira.macrocarpa.(Cham..&.Schl.).Schl..ex.L..H..Bailey"="Pachira.macrocarpa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Palaquium.formosanum.Hayata."="Palaquium.formosanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.cornea.(Lour.).Liao"="Pasania.cornea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.dodoniifolia.Hayata"="Pasania.dodoniifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.formosana.(Skan).Schott."="Pasania.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.glabra.(Thunb..ex.Murray).Oerst.."="Pasania.glabra"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.hancei.(Benth.).Schottky.var..arisanensis.(Hayata).Liao"="Pasania.hancei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.hancei.(Benth.).Schottky.var..ternaticupula.(Hayata).Liao."="Pasania.hancei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.hancei.(Benth.).Schottky.var..ternaticupula.(Hayata).Liao.f..subreticulata.(Hayata).Liao"="Pasania.hancei")) #Go to here
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.harlandii.(Hance).Oerst."="Pasania.harlandii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.kawakamii.(Hayata).Schottky."="Pasania.kawakamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.konishii.(Hayata).Schottky"="Pasania.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.nantoensis.(Hayata).Schottky"="Pasania.nantoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.shinsuiensis.(Hayata.&.Kanehira).Nakai"="Pasania.shinsuiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pasania.synbalanos.(Hance).Schott."="Pasania.synbalanos"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Paulownia...taiwaniana.T..W..Hu..&.H..J..Chang"="Paulownia.taiwaniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Paulownia.fortunei.Hemsl."="Paulownia.fortunei"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Perrottetia.arisanensis.Hayata"="Perrottetia.arisanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Phellodendron.amurense.Rupr..var..wilsonii.(Hayata.&.Kanehira).Chang"="Phellodendron.amurense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Phoebe.formosana.(Hayata).Hayata"="Phoebe.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Photinia.niitakayamensis.Hayata"="Photinia.niitakayamensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Photinia.serratifolia.(Desf.).Kalkman"="Photinia.serratifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Photinia.serratifolia.(Desf.).Kalkman.var..ardisiifolia.(Hayata).Ohashi."="Photinia.serratifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Photinia.serratifolia.(Desf.).Kalkman.var..lasiopetala.(Hayata).Ohashi"="Photinia.serratifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Phyllostachys.makinoi.Hayata"="Phyllostachys.makinoi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Phyllostachys.pubescens.E..Mazel.ex.H..de.Leh."="Phyllostachys.pubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Picea.morrisonicola.Hayata"="Picea.morrisonicola"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pieris.taiwanensis.Hayata"="Pieris.taiwanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pinus.armandii.Franchet.var..masteriana.Hayata"="Pinus.armandii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pinus.morrisonicola.Hayata"="Pinus.morrisonicola"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pinus.taiwanensis.Hayata."="Pinus.taiwanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pisonia.umbellifera.(Forst.).Seem."="Pisonia.umbellifera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pistacia.chinensis.Bunge"="Pistacia.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pittosporum.illicioides.Makino"="Pittosporum.illicioides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pittosporum.illicioides.Makino.var..angustifolium.Huang.ex.Lu"="Pittosporum.illicioides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pittosporum.pentandrum.(Blanco).Merr."="Pittosporum.pentandrum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Planchonella.obovata.(R..Br.).Pierre"="Planchonella.obovata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Platycarya.strobilacea.Sieb..&.Zucc."="Platycarya.strobilacea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Podocarpus.fasciculus.de.Laubenfels"="Podocarpus.fasciculus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Podocarpus.macrophyllus.(Thunb.).Sweet.var..maki.Sieb..&.Zucc."="Podocarpus.macrophyllus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Podocarpus.nakaii.Hayata"="Podocarpus.nakaii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Polyspora.axillaris.(Roxb..ex.Ker.Gawl.).Sweet.ex.G..Don."="Polyspora.axillaris"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pourthiaea.beauverdiana.(Schneider).Hatusima.var..notabilis.(Rehder.&.Wilson).Hatusima"="Pourthiaea.beauverdiana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pourthiaea.lucida.Decaisne"="Pourthiaea.lucida"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pourthiaea.villosa.(Thunb..ex.Murray).Decne..var..parvifolia.(Pritz.).Iketani.&.Ohashi"="Pourthiaea.villosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Premna.microphylla.Turcz."="Premna.microphylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Premna.octonervia.Merr..&.Metc.."="Premna.octonervia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Premna.serratifolia.Linn."="Premna.serratifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prinsepia.scandens.Hayata"="Prinsepia.scandens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.buergeriana.Miq."="Prunus.buergeriana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.campanulata.Maxim."="Prunus.campanulata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.matuurai.Sasaki"="Prunus.matuurai"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.mume.(Sieb.).Sieb..&.Zucc."="Prunus.mume"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.obtusata.Koehne"="Prunus.obtusata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.phaeosticta.(Hance).Maxim.."="Prunus.phaeosticta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.spinulosa..Sieb..&.Zucc.var..spinulosa"="Prunus.spinulosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.taiwaniana.Hayata"="Prunus.taiwaniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.transarisanensis.Hayata"="Prunus.transarisanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Prunus.zippeliana.Miq."="Prunus.zippeliana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pseudotsuga.wilsoniana.Hayata"="Pseudotsuga.wilsoniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Psidium.guajava.L."="Psidium.guajava"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Psychotria.rubra.(Lour.).Poir.."="Psychotria.rubra"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pterocarpus.indicus.Willd.."="Pterocarpus.indicus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pyrenaria.shinkoensis.(Hayata).Keng"="Pyrenaria.shinkoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Pyrus.taiwanensis.Iketani.&.Ohashi"="Pyrus.taiwanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Quercus.dentata.Thunb."="Quercus.dentata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Quercus.spinosa.A..David.ex.Fr."="Quercus.spinosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Quercus.tarokoensis.Hayata"="Quercus.tarokoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Quercus.tatakaensis.Tomiya"="Quercus.tatakaensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Quercus.variabilis.Blume"="Quercus.variabilis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Radermachera.sinica.(Hance).Hemsl.."="Radermachera.sinica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Randia.cochinchinensis.(Lour.).Merr."="Randia.cochinchinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Reevesia.formosana.Sprague"="Reevesia.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.chingshuiensis.Shimizu.var..tashanensis.Liu.&.Wang"="Rhamnus.chingshuiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.crenata.Sieb..&.Zucc."="Rhamnus.crenata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.formosana.Matsum."="Rhamnus.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.kanagusuki.Makino"="Rhamnus.kanagusuki"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.nakaharae.(Hayata).Hayata"="Rhamnus.nakaharae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.parvifolia.Bunge"="Rhamnus.parvifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhamnus.pilushanensis.Liu.&.Wang"="Rhamnus.pilushanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhaphiolepis.indica.(L.).Lindl..ex.Ker.var..tashiroi.Hayata"="Rhaphiolepis.indica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.breviperulatum.Hayata"="Rhododendron.breviperulatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.formosanum.Hemsl."="Rhododendron.formosanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.leptosanthum.Hayata."="Rhododendron.leptosanthum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.mariesii.Hemsl..&.Wilson"="Rhododendron.mariesii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.oldhamii.Maxim.."="Rhododendron.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.ovatum.Planch."="Rhododendron.ovatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.ovatum.Planch..var..lamprophyllum.(Hayata).F..Y..Lu.&.C..H..Ou"="Rhododendron.ovatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.pseudochrysanthum.Hayata"="Rhododendron.pseudochrysanthum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.rubropilosum.Hayata"="Rhododendron.rubropilosum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhododendron.rubropilosum.Hayata.var..taiwanalpinum.(Ohwi).S..Y..Lu,.Yuen.P..Yang.&.Y..H..Tseng"="Rhododendron.rubropilosum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhus.ambigua.Lav..ex.Dipped."="Rhus.ambigua"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhus.javanica.L..var..roxburghiana.(DC.).Rehd..&.Willson"="Rhus.javanica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhus.succedanea.L..var..dumoutieri.Kudo.&.Matsura"="Rhus.succedanea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhus.succedanea.L.."="Rhus.succedanea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Rhus.sylvestris.Sieb..&.Zucc."="Rhus.sylvestris"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sageretia.randaiensis.Hayata"="Sageretia.randaiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sageretia.thea.(Osbeck).Johnst..var..taiwaniana.(Masam.).Liu.&.Wang"="Sageretia.thea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Salix.fulvopubescens.Hayata."="Salix.fulvopubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Salix.fulvopubescens.Hayata.var..doii.(Hayata).Yang.&.Huang"="Salix.fulvopubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Salix.fulvopubescens.Hayata.var..tagawana.(Koidz.).Yang.&.Huang"="Salix.fulvopubescens"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sapindus.mukorossi.Gaertn."="Sapindus.mukorossi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sapium.discolor.Muell.-Arg."="Sapium.discolor"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sapium.discolor.Muell.-Arg.."="Sapium.discolor"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sapium.sebiferum.(L.).Roxb."="Sapium.sebiferum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sassafras.randaiense.(Hayata).Rehder"="Sassafras.randaiense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schefflera.octophylla.(Lour.).Harms"="Schefflera.octophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schefflera.octophylla.(Lour.).Harms."="Schefflera.octophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schefflera.odorata.(Blanco).Merr..&.Rolfe."="Schefflera.odorata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schefflera.taiwaniana.(Nakai).Kanehira"="Schefflera.taiwaniana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schima.superba.Gard..&.Champ."="Schima.superba"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schima.superba.Gard..&.Champ..var..kankaoensis.(Hayata).Keng"="Schima.superba"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Schoepfia.jasminodora.Sieb..&.Zucc."="Schoepfia.jasminodora"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Scolopia.oldhamii.Hance"="Scolopia.oldhamii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Semecarpus.cuneifomis.Blanco"="Semecarpus.cuneifomis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Senna.alata.(L.).Roxb."="Senna.alata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Senna.siamea.(Lam.).Irwin.&.Barneby"="Senna.siamea"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Severinia.buxifolia.(Poir.).Tenore"="Severinia.buxifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sinoadina.racemosa.(Sieb..&.Zucc.).Ridsdale"="Sinoadina.racemosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sinoadina.racemosa.(Sieb..&.Zucc.).Ridsdale."="Sinoadina.racemosa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sinopanax.formosana.(Hayata).Li"="Sinopanax.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Skimmia.japonica.Thunb..ssp..distincte-venulosa.(Hayata).Ho"="Skimmia.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Skimmia.japonica.Thunb..ssp..distincte-venulosa.(Hayata).Ho."="Skimmia.japonica"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sloanea.formosana.Li"="Sloanea.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sorbus.randaiensis.(Hayata).Koidz."="Sorbus.randaiensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Stachyurus.himalaicus.Hook..f..&.Thomson.ex.Benth."="Stachyurus.himalaicus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Styrax.formosana.Matsum."="Styrax.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Styrax.formosana.Matsum.."="Styrax.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Styrax.suberifolia.Hook..&.Arn.."="Styrax.suberifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Swida.controversa.(Hemsl.).Soj.k."="Swida.controversa"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Swida.macrophylla.(Wall.).Soj.k"="Swida.macrophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Swietenia.mahogoni.(L.).Jacq."="Swietenia.mahogoni"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Swietenia.macrophylla.King."="Swietenia.macrophylla"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Sycopsis.sinensis.Oliver"="Sycopsis.sinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.arisanensis.Hayata"="Symplocos.arisanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.caudata.Wall..ex.G..Don"="Symplocos.caudata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.chinensis.(Lour.).Druce"="Symplocos.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.congesta.Benth.."="Symplocos.congesta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.formosana.Brand"="Symplocos.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.glauca.(Thunb.).Koidz.."="Symplocos.glauca"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.heishanensis.Hayata."="Symplocos.heishanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.konishii.Hayata"="Symplocos.konishii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.koshunensis.Kaneh."="Symplocos.koshunensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.lucida.(Thunb.).Sieb..&.Zucc."="Symplocos.lucida"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.macrostroma.Hayata."="Symplocos.macrostroma"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.migoi.Nagam."="Symplocos.migoi"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.modesta.Brand"="Symplocos.modesta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.morrisonicola.Hayata"="Symplocos.morrisonicola"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.nokoensis.(Hayata).Kanehira"="Symplocos.nokoensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.setchuensis.Brand"="Symplocos.setchuensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.shilanensis.Y..C..Liu.&.F..Y..Lu"="Symplocos.shilanensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.sonoharae.Koidz."="Symplocos.sonoharae"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.stellaris.Brand"="Symplocos.stellaris"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.theophrastifolia.Sieb..&.Zucc."="Symplocos.theophrastifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.trichoclada.Hayata"="Symplocos.trichoclada"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Symplocos.wikstroemiifolia.Hayata"="Symplocos.wikstroemiifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.buxifolium.Hook..&.Arn."="Syzygium.buxifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.buxifolium.Hook..&.Arn.."="Syzygium.buxifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.densinervium.Merr..var..insulare.Chang"="Syzygium.densinervium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.euphlebium.(Hayata).Mori"="Syzygium.euphlebium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.formosanum.(Hayata).Mori"="Syzygium.formosanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.kusukusense.(Hayata).Mori"="Syzygium.kusukusense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.paucivenium.(Robins.).Merr."="Syzygium.paucivenium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Syzygium.samarangense.(Blume).Merr..&.Perry"="Syzygium.samarangense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Taiwania.cryptomerioides.Hayata"="Taiwania.cryptomerioides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Taxus.sumatrana.(Miq.).de.Laub."="Taxus.sumatrana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tectona.grandis.L..f.."="Tectona.grandis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Terminalia.mantaly.H..Perrier"="Terminalia.mantaly"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ternstroemia.gymnanthera.(Wight.&.Arn.).Sprague"="Ternstroemia.gymnanthera"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tetradium.glabrifolium.(Champ..ex.Benth.).T..Hartley."="Tetradium.glabrifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tetradium.ruticarpum.(A..Juss.).T..Hartley."="Tetradium.ruticarpum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tetrapanax.papyriferus.(Hook.).K..Koch"="Tetrapanax.papyriferus"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Trachelospermum.gracilipes.Hook..f."="Trachelospermum.gracilipes"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Trema.orientalis.(L.).Blume"="Trema.orientalis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tricalysia.dubia.(Lindl.).Ohwi"="Tricalysia.dubia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Trichodesma.calycosum.Collett.&.Hemsl."="Trichodesma.calycosum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Trochodendron.aralioides.Sieb..&.Zucc."="Trochodendron.aralioides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Trochodendron.aralioides.Sieb..&.Zucc.."="Trochodendron.aralioides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Tsuga.chinensis.(Franchet).Pritz..ex.Diels.var..formosana.(Hayata).Li.&.Keng"="Tsuga.chinensis"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Turpinia.formosana.Nakai"="Turpinia.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Turpinia.ternata.Nakai."="Turpinia.ternata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ulmus.parvifolia.Jacq."="Ulmus.parvifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Ulmus.uyematsui.Hayata"="Ulmus.uyematsui"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.bracteatum.Thunb.."="Vaccinium.bracteatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.dunalianum.Wight.var..caudatifolium.(Hayata).H..L..Li"="Vaccinium.dunalianum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.kengii.C..E..Chang"="Vaccinium.kengii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.randaiense.Hayata"="Vaccinium.randaiense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.wrightii.Gray"="Vaccinium.wrightii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vaccinium.wrightii.Gray."="Vaccinium.wrightii"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.arboricolum.Hayata"="Viburnum.arboricolum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.betulifolium.Batal."="Viburnum.betulifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.foetidum.Wall..var..rectangulatum.(Graebn.).Rehder."="Viburnum.foetidum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.formosanum.Hayata"="Viburnum.formosanum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.integrifolium.Hayata"="Viburnum.integrifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.luzonicum.Rolfe."="Viburnum.luzonicum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.odoratissimum.Ker"="Viburnum.odoratissimum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.parvifolium.Hayata"="Viburnum.parvifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.propinquum.Hemsl."="Viburnum.propinquum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.sympodiale.Graebner"="Viburnum.sympodiale"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.taitoense.Hayata"="Viburnum.taitoense"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Viburnum.urceolatum.Sieb..&.Zucc.."="Viburnum.urceolatum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vitex.negundo.L."="Vitex.negundo"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vitex.quinata.(Lour.).F..N..Williams"="Vitex.quinata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vitex.quinata.(Lour.).F..N..Williams."="Vitex.quinata"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Vitex.rotundifolia.L..f."="Vitex.rotundifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Wendlandia.formosana.Cowan."="Wendlandia.formosana"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Wendlandia.uvariifolia.Hance"="Wendlandia.uvariifolia"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Xylosma.congesta.(Lour.).Merr."="Xylosma.congesta"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Zanthoxylum.ailanthoides.Sieb..&.Zucc."="Zanthoxylum.ailanthoides"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Zanthoxylum.pistaciiflorum.Hayata."="Zanthoxylum.pistaciiflorum"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Zanthoxylum.schinifolium.Sieb..&.Zucc."="Zanthoxylum.schinifolium"))
+inventory$Sci_Name<-revalue(inventory$Sci_Name,
+                            c("Zelkova.serrata.(Thunb.).Makino"="Zelkova.serrata"))
+
+write.csv(inventory, file="C:/Users/c_mer/Documents/SDMs_Data_Code/Inventory_Data/Inventory_Copies/NFI_Inventory_Named.csv")
+
+
+
+library(plyr)
+library(gridExtra)#for displaying ggplots in one window
+library(dplyr)
+library(sf)
+library(mapview)
+library(raster)
+library(sp)
+library(tidyverse)
+
+setwd("C:/Users/c_mer/Documents/SDMs_Data_Code/inventory_Data/Inventory_Copies")
+
+inventory <- read_csv("NFI_Inventory_Named.csv") %>%
+  dplyr::select(-...1) #column added by R when exported (see above)
+
+#Have a look at your data frame
+inventory
+#check the structure of the data
+str(inventory)
+dim(inventory)
+
+#### 2.1 Y axis, X Axis, Record type data cleaning
+
+
+plot(inventory$X_axis) 
+plot(inventory$Y_axis)
+
+summary(inventory$X_axis)
+summary(inventory$Y_axis)
+
+inventory$Record_Type <- as.factor(inventory$Record_Type)
+
+inventory$Record_Type <- as.numeric(inventory$Record_Type
+                                    
+inventory <- inventory[!is.na(inventory$X_axis), ] #remove NA values
+inventory <- inventory[!is.na(inventory$Y_axis), ] #remove NA values
+                                    inventory<-(inventory[inventory$X_axis <8.8, ]) # remove x axis outliers
+#now remove y-axis outliers
+inventory<-(inventory[inventory$Y_axis <quantile(inventory$Y_axis,0.9999),]) 
+                                    
+#now can calculate the correct x axis position since the plots were divided in two
+inventory <- inventory[!is.na(inventory$Record_Type), ] # Remove NA's from record type
+inventory$x_axis_new <- 0
+$x_axis_new <- inventory$X_axis
+inventory$x_axis_new[inventory$Record_Type==1] <- inventory$X_axis[inventory$Record_Type==1]
+inventory$x_axis_new[inventory$Record_Type==2] <- inventory$X_axis[inventory$Record_Type==2]+17.6
+                                    
+                                    # For comparison 
+ plot(inventory$X_axis) 
+plot(inventory$Y_axis)
+                                    
+summary(inventory$X_axis)
+summary(inventory$Y_axis)
+                                    
+                                    
+                                    
+#### 2.3. DBH data structure and formatting
+                                    
+plot(inventory$DBH) 
+summary(inventory$DBH)
+                                    
+inventory <- inventory[!is.na(inventory$DBH), ] # remove NA values
+inventory<-(inventory[inventory$DBH > 5, ]) # Remove values below 5 
+inventory<-(inventory[inventory$DBH <quantile(inventory$DBH,0.9999),]) # outlying values of dbh >0.9999 quantile removed
+                                    
+plot(inventory$DBH) 
+summary(inventory$DBH)
+                                    
+                                    
+#### 2.4. Tree Height data structure and formatting
+                                    
+ plot(inventory$Height) 
+ summary(inventory$Height)
+                                    
+                                    
+                                    inventory <- inventory[!is.na(inventory$Height), ] # remove NA values
+                                    inventory<- (inventory[inventory$Height <quantile(inventory$Height,0.9999),])#above upper quantile 
+                                    inventory<- (inventory[inventory$Height >quantile(inventory$Height,0.0001),]) #above lower quantile
+                                    
+                                    
+                      
+                                    
+2.5 Plot_X\_dec and Plot_Y\_dec structure and formatting
+                                      
+                               
+                                    
+plot(inventory$Plot_X_dec~inventory$Plot_Y_dec)
+ summary(inventory$Plot_X_dec)
+summary(inventory$Plot_Y_dec)
+
+inventory <- inventory[!is.na(inventory$Plot_X_dec), ] # remove NA values
+inventory <- inventory[!is.na(inventory$Plot_Y_dec), ] # remove NA values
+                                    
+summary(inventory$Plot_X_dec)
+summary(inventory$Plot_Y_dec)
+                                    
+                                    
+                                    
+# Remove extra elevation column added by accident
+                                    
+ summary(as.numeric(inventory$Elev1))
+summary(as.numeric(inventory$Elev2)) # Both same so remove Elev2
+                                    
+inventory <- dplyr::select(inventory, -Elev2)
+inventory$Elev1 <- as.numeric(inventory$Elev1)
+                                    
+summary(inventory$Elev1) # note highest mountain in Taiwan is 3,952 m above sea level
+hist(inventory$Elev1)
+                                    
+                                    
+#Export cleaned dataset
+#write.csv(inventory, file="D:/SDMs_Data_Code/Inventory_Data/Inventory_Copies/NFI_Inventory_Named_cleaned.csv")
+                                  
+                         
