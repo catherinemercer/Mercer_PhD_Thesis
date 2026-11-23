@@ -1,0 +1,65 @@
+// Load the LandTrendr.js module
+var ltgee = require('users/emaprlab/public:Modules/LandTrendr.js');
+
+// Parameters
+var startYear = 2002;
+var endYear = 2022;
+var startDay = '01-01';
+var endDay = '12-31'; 
+var index = 'NDVI';//replace with EVI and NBR
+var maskThese = ['cloud', 'shadow', 'snow', 'water'];
+
+var runParams = {
+  maxSegments:            6,
+  spikeThreshold:         0.9,
+  vertexCountOvershoot:   3,
+  preventOneYearRecovery: true,
+  recoveryThreshold:      0.25,
+  pvalThreshold:          0.05,
+  bestModelProportion:    0.75,
+  minObservationsNeeded:  6
+};
+
+var changeParams = {
+  delta:  'loss',
+  sort:   'greatest',
+  year:   {checked: true, start: 2002, end: 2022},
+  mag:    {checked: true, value: 1001, operator: '<'},
+  dur:    {checked: false, value: 4, operator: '<'},
+  preval: {checked: false, value: 300, operator: '>'},
+  mmu:    {checked: false, value: 11}
+};
+changeParams.index = index;
+
+// TanDEM-X mask (>2000 m) and small AOI
+var nl2012 = ee.Image('projects/ee-mercercatherine12/assets/TandexX_gaps_filled_linesclipped');
+var tdxMask = nl2012.gt(30);
+var aoi = nl2012.geometry().bounds();
+
+// Run LandTrendr once
+var lt = ltgee.runLT(startYear, endYear, startDay, endDay, aoi, index, [], runParams, maskThese);
+var changeImg = ltgee.getChangeMap(lt, changeParams)
+  .select(['yod', 'mag'])
+  .updateMask(tdxMask)
+  .toFloat();
+
+// Visualization
+var palette = ['#9400D3', '#4B0082', '#0000FF', '#00FF00', '#FFFF00', '#FF7F00', '#FF0000'];
+var yodVizParms = {min: startYear, max: endYear, palette: palette};
+var magVizParms = {min: 200, max: 800, palette: palette};
+
+Map.centerObject(aoi, 9);
+Map.addLayer(changeImg.select('mag'), magVizParms, 'Magnitude of Change (Loss)');
+Map.addLayer(changeImg.select('yod'), yodVizParms, 'Year of Detection');
+
+// Single export
+Export.image.toDrive({
+  image: changeImg,
+  description: 'NDVI_lt-loss_map_mountains',
+  folder: 'VegetationChange',
+  fileNamePrefix: 'NDVI_lt-loss_map_mountains',
+  region: aoi,
+  scale: 30,
+  crs: 'EPSG:4326',
+  maxPixels: 1e13
+});
