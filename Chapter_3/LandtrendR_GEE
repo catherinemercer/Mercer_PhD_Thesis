@@ -1,0 +1,180 @@
+// =====================================================================
+// LandTrendr (NDVI) for the shrub/herbaceous alpine zone, Taiwan
+//  1) change map  (when / how much the greatest gain happened)
+//  2) fitted yearly NDVI  -> SHAPE of the trend
+//  3) shape stratified by elevation x aspect  -> terrain controls
+//  4) per-pixel Sen slope (full / early / late) + terrain
+// =====================================================================
+var ltgee = require('users/emaprlab/public:Modules/LandTrendr.js');
+
+// ---------------------------- PARAMETERS -----------------------------
+var startYear = 1990;
+var endYear   = 2025;
+var startDay  = '05-01';
+var endDay    = '08-31';
+var index     = 'NDVI';
+var maskThese = ['cloud', 'shadow', 'snow', 'water'];
+
+var splitYear = 2010;     // early/late split for the two-period slopes
+var vegThr    = 100;      // NDVI 0.1 on the x1000 scale
+var sign      = 1;        // set to -1 if the fitted values run the wrong way (see print below)
+
+var runParams = {
+  maxSegments:            6,
+  spikeThreshold:         0.9,
+  vertexCountOvershoot:   3,
+  preventOneYearRecovery: true,
+  recoveryThreshold:      0.25,
+  pvalThreshold:          0.05,
+  bestModelProportion:    0.75,
+  minObservationsNeeded:  6
+};
+
+var changeParams = {
+  delta:  'gain',
+  sort:   'greatest',
+  // 1990 start: your 1987-1988 detections (about 70 % of all gain pixels) look like an
+  // artefact of sparse early data. Compare against 1985 to see the difference.
+  year:   {checked: true, start: 1990, end: 2025},
+  mag:    {checked: true, value: 100, operator: '>'},
+  dur:    {checked: false, value: 4, operator: '<'},
+  preval: {checked: false, value: 300, operator: '>'},
+  mmu:    {checked: false, value: 11}
+};
+changeParams.index = index;
+
+// ------------------- STUDY AREA: shrub/herbaceous polygons -----------
+var shrub   = ee.FeatureCollection('projects/ee-mercercatherine12/assets/Shrub_and_herbaceous_mask');
+var aoi     = shrub.geometry().bounds();
+var tdxMask = ee.Image().byte().paint(shrub, 1).selfMask();
+
+Map.centerObject(shrub, 8);
+Map.addLayer(shrub, {color: 'green'}, 'Shrub/herbaceous');
+
+// ------------------------------ TERRAIN ------------------------------
+var dem     = ee.Image('USGS/SRTMGL1_003');          // or 'NASA/NASADEM_HGT/001' (.select('elevation'))
+var terrain = ee.Terrain.products(dem).select(['elevation', 'slope', 'aspect']);
+
+// ------------------------------ RUN LT -------------------------------
+var lt = ltgee.runLT(startYear, endYear, startDay, endDay, aoi, index, [], runParams, maskThese);
+
+// =====================================================================
+// 1) CHANGE MAP (as before)
+// =====================================================================
+var changeImg = ltgee.getChangeMap(lt, changeParams)
+  .select(['yod', 'mag'])
+  .unmask(0)
+  .addBands(terrain)
+  .updateMask(tdxMask)
+  .toFloat();
+
+var palette = ['#9400D3', '#4B0082', '#0000FF', '#00FF00', '#FFFF00', '#FF7F00', '#FF0000'];
+Map.addLayer(changeImg.select('mag').selfMask(), {min: 100, max: 400, palette: palette}, 'Magnitude of Change (Gain)');
+Map.addLayer(changeImg.select('yod').selfMask(), {min: 1990, max: 2023, palette: palette}, 'Year of Detection');
+
+Export.image.toDrive({
+  image: changeImg, description: 'NDVI_gain_1990_2025', folder: 'VegetationChange',
+  fileNamePrefix: 'NDVI_gain_1990_2023', region: aoi, scale: 30,
+  crs: 'EPSG:3826', maxPixels: 1e13
+});
+
+// =====================================================================
+// 2) FITTED YEARLY NDVI: the shape through time
+// =====================================================================
+var fit = ltgee.getFittedData(lt, startYear, endYear, index);   // one band per year
+var fitBands = fit.bandNames();
+print('Fitted band names', fitBands);
+print('Fitted range (expect about 0-900)',
+      fit.reduceRegion({reducer: ee.Reducer.minMax(), geometry: aoi, scale: 300,
+                        maxPixels: 1e13, bestEffort: true, tileScale: 8}));
+
+var yearList = [];
+for (var y = startYear; y <= endYear; y++) yearList.push(y);
+var yearNames = yearList.map(function(yr) { return 'y' + yr; });
+
+// Collection with 'year' band first (x) and 'ndvi' band (y)
+var col = ee.ImageCollection(yearList.map(function(yr) {
+  var v = fit.select([yr - startYear]).multiply(sign).rename('ndvi').toFloat();
+  return ee.Image.constant(yr).rename('year').toFloat().addBands(v).set('year', yr);
+}));
+
+// Regional yearly series (mean/SD of vegetated pixels, vegetated fraction)
+var stats = ee.FeatureCollection(yearList.map(function(yr) {
+  var v = col.filter(ee.Filter.eq('year', yr)).first();
+  v = ee.Image(v).select('ndvi').updateMask(tdxMask);
+  var vegetated = v.gt(vegThr);
+  var green = v.updateMask(vegetated).reduceRegion({
+    reducer: ee.Reducer.mean().combine(ee.Reducer.stdDev(), '', true),
+    geometry: aoi, scale: 30, maxPixels: 1e13, tileScale: 8});
+  var frac = vegetated.reduceRegion({
+    reducer: ee.Reducer.mean(), geometry: aoi, scale: 30, maxPixels: 1e13, tileScale: 8});
+  return ee.Feature(null, {year: yr, ndvi_mean: green.get('ndvi_mean'),
+                           ndvi_sd: green.get('ndvi_stdDev'), veg_frac: frac.get('ndvi')});
+}));
+Export.table.toDrive({
+  collection: stats, description: 'annual_ndvi_stats', folder: 'VegetationChange',
+  fileNamePrefix: 'annual_ndvi_stats', fileFormat: 'CSV',
+  selectors: ['year', 'ndvi_mean', 'ndvi_sd', 'veg_frac']
+});
+
+// =====================================================================
+// 3) SHAPE BY TERRAIN: yearly mean NDVI per elevation (100 m) x aspect class
+// =====================================================================
+var asp = terrain.select('aspect');
+var aspClass = ee.Image(3)                              // 3 = other
+  .where(asp.gte(135).and(asp.lte(225)), 1)             // 1 = equatorial-facing (S)
+  .where(asp.gte(315).or(asp.lte(45)), 2)               // 2 = polar-facing (N)
+  .rename('asp');
+var elevBand = terrain.select('elevation').divide(100).floor();
+var key = elevBand.multiply(10).add(aspClass).rename('key').toInt();   // e.g. 301 = 3000 m, equatorial
+
+var steep = terrain.select('slope').gt(3);              // aspect is meaningless on flat ground
+var stack = col.select('ndvi').toBands().rename(yearNames)
+               .updateMask(tdxMask).updateMask(steep);
+
+var grouped = stack.addBands(key).reduceRegion({
+  reducer: ee.Reducer.mean().repeat(yearList.length)
+             .group({groupField: yearList.length, groupName: 'key'}),
+  geometry: aoi, scale: 30, maxPixels: 1e13, tileScale: 8
+});
+var byTerrain = ee.FeatureCollection(ee.List(grouped.get('groups')).map(function(d) {
+  d = ee.Dictionary(d);
+  return ee.Feature(null, ee.Dictionary.fromLists(yearNames, ee.List(d.get('mean')))
+                            .set('key', d.get('key')));
+}));
+Export.table.toDrive({
+  collection: byTerrain, description: 'fitted_by_terrain', folder: 'VegetationChange',
+  fileNamePrefix: 'fitted_by_terrain', fileFormat: 'CSV'
+});
+// If the reduction times out, use scale: 90 or run it on sub-regions.
+
+// =====================================================================
+// 4) PER-PIXEL SEN SLOPE (full / early / late) + TERRAIN
+// =====================================================================
+function periodTrend(startY, endY, suffix) {
+  var c   = col.filter(ee.Filter.rangeContains('year', startY, endY));
+  var sen = c.reduce(ee.Reducer.sensSlope());
+  var mk  = c.reduce(ee.Reducer.kendallsCorrelation(2));
+  return sen.select('slope').rename('sen_' + suffix)
+            .addBands(mk.select('p-value').rename('p_' + suffix));
+}
+print('Sen / MK band names', col.reduce(ee.Reducer.sensSlope()).bandNames(),
+                             col.reduce(ee.Reducer.kendallsCorrelation(2)).bandNames());
+
+var full  = periodTrend(startYear, endYear, 'full');
+var early = periodTrend(startYear, splitYear, 'early');
+var late  = periodTrend(splitYear + 1, endYear, 'late');
+
+var trendImg = full.addBands(early).addBands(late)
+  .addBands(late.select('sen_late').subtract(early.select('sen_early')).rename('sen_diff'))
+  .addBands(terrain)
+  .updateMask(tdxMask)
+  .toFloat();
+// Band order: sen_full, p_full, sen_early, p_early, sen_late, p_late, sen_diff,
+//             elevation, slope, aspect   (slopes in NDVI x1000 per year)
+
+Export.image.toDrive({
+  image: trendImg, description: 'NDVI_trend_two_periods', folder: 'VegetationChange',
+  fileNamePrefix: 'NDVI_trend_two_periods', region: aoi, scale: 30,
+  crs: 'EPSG:3826', maxPixels: 1e13
+});
